@@ -1,0 +1,10 @@
+[versions]
+lorenz = "0.5.8"
+mapping-io = "0.3.0"
+
+[libraries]
+lorenz = { module = "org.cadixdev:lorenz", version.ref = "lorenz" }
+mapping_io = { module = "net.fabricmc:mapping-io", version.ref = "mapping-io" }
+
+[plugins]
+quilt_gradle_licenser = { id = "org.quiltmc.gradle.licenser", version = "1.2.+" }

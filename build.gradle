@@ -1,47 +1,43 @@
 plugins {
 	id 'java-library'
 	id 'maven-publish'
-	id("org.cadixdev.licenser") version "0.5.0"
+	alias libs.plugins.quilt.gradle.licenser
 }
-
-group 'org.quiltmc'
-archivesBaseName = 'lorenz-tiny'
-version '3.0.0'
 
 def ENV = System.getenv()
-version = version + (ENV.GITHUB_ACTIONS ? "" : "+local")
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-java {
-	withSourcesJar()
-	withJavadocJar()
-}
+archivesBaseName = project.archives_base_name
+version = "$project.version{ENV.GITHUB_ACTIONS == 'true' ? '' : '+local'}"
+group = project.maven_group
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
+	it.options.release = 17
+}
 
-	if (JavaVersion.current().isJava9Compatible()) {
-		it.options.release = 8
-	}
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+
+	withSourcesJar()
+	withJavadocJar()
 }
 
 repositories {
 	mavenCentral()
 	maven {
-		name = 'Quilt'
-		url = 'https://maven.quiltmc.org/repository/release'
+		name = 'Fabric'
+		url = 'https://maven.fabricmc.net/'
 	}
 }
 
 dependencies {
-	api 'org.cadixdev:lorenz:0.5.6'
-	api 'org.quiltmc:tiny-mappings-parser:0.3.0'
+	api libs.lorenz
+	api libs.mapping.io
 }
 
 license {
-	header file("HEADER")
+	rule file("codeformat/HEADER")
 	include '**/*.java'
 }
 
@@ -65,3 +61,17 @@ publishing {
 		}
 	}
 }
+
+// A task to ensure that the version being released has not already been released.
+task checkVersion {
+	doFirst {
+		def xml = new URL('https://maven.quiltmc.org/repository/release/org/quiltmc/lorenz-tiny/maven-metadata.xml').text
+		def metadata = new XmlSlurper().parseText(xml)
+		def versions = metadata.versioning.versions.version*.text();
+		if (versions.contains(version)) {
+			throw new RuntimeException("${version} has already been released!")
+		}
+	}
+}
+
+publish.mustRunAfter checkVersion
