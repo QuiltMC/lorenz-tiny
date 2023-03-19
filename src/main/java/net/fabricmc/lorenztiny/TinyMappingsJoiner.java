@@ -2,6 +2,7 @@
  * This file is part of lorenz-tiny, licensed under the MIT License (MIT).
  *
  * Copyright (c) 2020 FabricMC
+ * Copyright (c) 2023 QuiltMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +25,7 @@
 
 package net.fabricmc.lorenztiny;
 
-import net.fabricmc.mapping.tree.ClassDef;
-import net.fabricmc.mapping.tree.FieldDef;
-import net.fabricmc.mapping.tree.MethodDef;
-import net.fabricmc.mapping.tree.TinyTree;
+import net.fabricmc.mappingio.tree.MappingTree;
 import org.cadixdev.lorenz.MappingSet;
 import org.cadixdev.lorenz.io.MappingsReader;
 import org.cadixdev.lorenz.model.ClassMapping;
@@ -37,7 +35,7 @@ import java.util.Map;
 
 /**
  * A {@link MappingsReader mappings reader} for reading mappings
- * from across two {@link TinyTree tiny trees}, using a namespace
+ * from across two {@link MappingTree tiny trees}, using a namespace
  * present in both to match.
  *
  * @author Jamie Mansfield
@@ -45,16 +43,16 @@ import java.util.Map;
  */
 public class TinyMappingsJoiner extends MappingsReader {
 
-	private final TinyTree treeA;
+	private final MappingTree treeA;
 	private final String from;
 	private final String matchA;
 
-	private final TinyTree treeB;
+	private final MappingTree treeB;
 	private final String to;
 	private final String matchB;
 
-	public TinyMappingsJoiner(final TinyTree treeA, final String from, final String matchA,
-	                          final TinyTree treeB, final String to, final String matchB) {
+	public TinyMappingsJoiner(final MappingTree treeA, final String from, final String matchA,
+	                          final MappingTree treeB, final String to, final String matchB) {
 		this.treeA = treeA;
 		this.from = from;
 		this.matchA = matchA;
@@ -63,8 +61,8 @@ public class TinyMappingsJoiner extends MappingsReader {
 		this.matchB = matchB;
 	}
 
-	public TinyMappingsJoiner(final TinyTree treeA, final String from,
-	                          final TinyTree treeB, final String to,
+	public TinyMappingsJoiner(final MappingTree treeA, final String from,
+	                          final MappingTree treeB, final String to,
 	                          final String match) {
 		this(treeA, from, match, treeB, to, match);
 	}
@@ -72,45 +70,57 @@ public class TinyMappingsJoiner extends MappingsReader {
 	@Override
 	public MappingSet read(final MappingSet mappings) {
 		// These maps have matched name -> definition from a
-		final Map<String, ClassDef> classes = new HashMap<>();
-		final Map<String, FieldDef> fields = new HashMap<>();
-		final Map<String, MethodDef> methods = new HashMap<>();
+		final var classes = new HashMap<String, MappingTree.ClassMapping>();
+		final var fields = new HashMap<String, MappingTree.FieldMapping>();
+		final var methods = new HashMap<String, MappingTree.MethodMapping>();
 
-		for (final ClassDef klass : this.treeB.getClasses()) {
+		for (final var klass : this.treeB.getClasses()) {
 			classes.put(klass.getName(this.matchA), klass);
 
-			for (final FieldDef field : klass.getFields()) {
+			for (final var field : klass.getFields()) {
 				fields.put(field.getName(this.matchA), field);
 			}
 
-			for (final MethodDef method : klass.getMethods()) {
+			for (final var method : klass.getMethods()) {
 				methods.put(method.getName(this.matchA), method);
 			}
 		}
 
-		for (final ClassDef classA : this.treeA.getClasses()) {
-			final ClassDef classB = classes.get(classA.getName(this.matchB));
+		for (final var classA : this.treeA.getClasses()) {
+			final var classB = classes.get(classA.getName(this.matchB));
 
-			final ClassMapping<?, ?> klass = mappings.getOrCreateClassMapping(classA.getName(this.from));
+			final var klass = mappings.getOrCreateClassMapping(classA.getName(this.from));
 			if (classB != null) {
-				klass.setDeobfuscatedName(classB.getName(this.to));
-			}
+				var deobfName = classB.getName(this.to);
 
-			for (final FieldDef fieldA : classA.getFields()) {
-				final FieldDef fieldB = fields.get(fieldA.getName(this.matchB));
-
-				if (fieldB != null) {
-					klass.getOrCreateFieldMapping(fieldA.getName(this.from), fieldA.getDescriptor(this.from))
-							.setDeobfuscatedName(fieldB.getName(this.to));
+				if (deobfName != null) {
+					klass.setDeobfuscatedName(deobfName);
 				}
 			}
 
-			for (final MethodDef methodA : classA.getMethods()) {
-				final MethodDef methodB = methods.get(methodA.getName(this.matchB));
+			for (final var fieldA : classA.getFields()) {
+				final var fieldB = fields.get(fieldA.getName(this.matchB));
+
+				if (fieldB != null) {
+					var deobfName = fieldB.getName(this.to);
+
+					if (deobfName != null) {
+						klass.getOrCreateFieldMapping(fieldA.getName(this.from), fieldA.getDesc(this.from))
+								.setDeobfuscatedName(deobfName);
+					}
+				}
+			}
+
+			for (final var methodA : classA.getMethods()) {
+				final var methodB = methods.get(methodA.getName(this.matchB));
 
 				if (methodB != null) {
-					klass.getOrCreateMethodMapping(methodA.getName(this.from), methodA.getDescriptor(this.from))
-							.setDeobfuscatedName(methodB.getName(this.to));
+					String deobfName = methodB.getName(this.to);
+
+					if (deobfName != null) {
+						klass.getOrCreateMethodMapping(methodA.getName(this.from), methodA.getDesc(this.from))
+								.setDeobfuscatedName(deobfName);
+					}
 				}
 			}
 		}
@@ -119,7 +129,5 @@ public class TinyMappingsJoiner extends MappingsReader {
 	}
 
 	@Override
-	public void close() {
-	}
-
+	public void close() {}
 }
