@@ -7,7 +7,7 @@ plugins {
 def ENV = System.getenv()
 
 archivesBaseName = project.archives_base_name
-version = "$project.version{ENV.GITHUB_ACTIONS == 'true' ? '' : '+local'}"
+version = "$project.version${ENV.GITHUB_ACTIONS == 'true' ? '' : '+local'}"
 group = project.maven_group
 
 tasks.withType(JavaCompile).configureEach {
@@ -45,7 +45,6 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			from components.java
-			withoutBuildIdentifier()
 		}
 	}
 

@@ -72,22 +72,28 @@ public class TinyMappingsReader extends MappingsReader {
 
 	@Override
 	public MappingSet read(final MappingSet mappings) {
-		for (final MappingTree.ClassMapping klass : this.tree.getClasses()) {
-			final ClassMapping<?, ?> mapping = mappings.getOrCreateClassMapping(klass.getName(this.from))
-					.setDeobfuscatedName(klass.getName(this.to));
+		for (final var klass : this.tree.getClasses()) {
+			if (this.areBothNamesNull(klass)) continue;
 
-			for (final MappingTree.FieldMapping field : klass.getFields()) {
-				mapping.getOrCreateFieldMapping(field.getName(this.from), field.getDesc(this.from))
-						.setDeobfuscatedName(field.getName(this.to));
+			final ClassMapping<?, ?> mapping = mappings.getOrCreateClassMapping(this.getFromNameWithFallback(klass))
+					.setDeobfuscatedName(this.getToNameWithFallback(klass));
+
+			for (final var field : klass.getFields()) {
+				if (this.areBothNamesNull(field)) continue;
+
+				mapping.getOrCreateFieldMapping(this.getFromNameWithFallback(field), field.getDesc(this.from))
+						.setDeobfuscatedName(this.getToNameWithFallback(field));
 			}
 
-			for (final MappingTree.MethodMapping method : klass.getMethods()) {
-				final MethodMapping methodmapping = mapping
-						.getOrCreateMethodMapping(method.getName(this.from), method.getDesc(this.from))
-						.setDeobfuscatedName(method.getName(this.to));
+			for (final var method : klass.getMethods()) {
+				if (this.areBothNamesNull(method)) continue;
 
-				for (final MappingTree.MethodArgMapping param : method.getArgs()) {
-					methodmapping.getOrCreateParameterMapping(param.getArgPosition())
+				final var methodMapping = mapping
+						.getOrCreateMethodMapping(this.getFromNameWithFallback(method), method.getDesc(this.from))
+						.setDeobfuscatedName(this.getToNameWithFallback(method));
+
+				for (final var param : method.getArgs()) {
+					methodMapping.getOrCreateParameterMapping(param.getArgPosition())
 							.setDeobfuscatedName(param.getName(this.to));
 				}
 			}
@@ -105,4 +111,24 @@ public class TinyMappingsReader extends MappingsReader {
 		}
 	}
 
+	private boolean areBothNamesNull(MappingTree.ElementMapping mapping) {
+		var fromName = mapping.getName(this.from);
+		var toName = mapping.getName(this.to);
+
+		return fromName == null && toName == null;
+	}
+
+	private String getFromNameWithFallback(MappingTree.ElementMapping mapping) {
+		var fromName = mapping.getName(this.from);
+		var toName = mapping.getName(this.to);
+
+		return fromName != null ? fromName : toName;
+	}
+
+	private String getToNameWithFallback(MappingTree.ElementMapping mapping) {
+		var fromName = mapping.getName(this.from);
+		var toName = mapping.getName(this.to);
+
+		return toName != null ? toName : fromName;
+	}
 }
