@@ -56,7 +56,7 @@ public enum TinyMappingFormat {
 	TINY_2 {
 		@Override
 		protected MappingTree load(final BufferedReader reader) throws IOException {
-			MemoryMappingTree mappingTree = new MemoryMappingTree();
+			var mappingTree = new MemoryMappingTree();
 			MappingReader.read(reader, net.fabricmc.mappingio.format.MappingFormat.TINY_2, mappingTree);
 			return mappingTree;
 		}
@@ -68,7 +68,7 @@ public enum TinyMappingFormat {
 	TINY {
 		@Override
 		protected MappingTree load(final BufferedReader reader) throws IOException {
-			MemoryMappingTree mappingTree = new MemoryMappingTree();
+			var mappingTree = new MemoryMappingTree();
 			MappingReader.read(reader, net.fabricmc.mappingio.format.MappingFormat.TINY, mappingTree);
 			return mappingTree;
 		}
@@ -85,7 +85,7 @@ public enum TinyMappingFormat {
 	DETECT {
 		@Override
 		protected MappingTree load(final BufferedReader reader) throws IOException {
-			MemoryMappingTree mappingTree = new MemoryMappingTree();
+			var mappingTree = new MemoryMappingTree();
 			MappingReader.read(reader, mappingTree);
 			return mappingTree;
 		}
@@ -128,7 +128,7 @@ public enum TinyMappingFormat {
 	 * @since 3.0.0
 	 */
 	public void write(final MappingSet mappings, final Path path, final String from, final String to) throws IOException {
-		try (final BufferedWriter writer = Files.newBufferedWriter(path)) {
+		try (final var writer = Files.newBufferedWriter(path)) {
 			this.createWriter(writer, from, to).write(mappings);
 		}
 	}
@@ -151,7 +151,7 @@ public enum TinyMappingFormat {
 	 */
 	public MappingsReader createReader(final Path path,
 	                                   final String from, final String to) throws IOException {
-		try (final BufferedReader reader = Files.newBufferedReader(path)) {
+		try (final var reader = Files.newBufferedReader(path)) {
 			return new TinyMappingsReader(this.load(reader), from, to);
 		}
 	}
@@ -174,7 +174,7 @@ public enum TinyMappingFormat {
 	 */
 	public MappingSet read(final MappingSet mappings, final Path path,
 	                       final String from, final String to) throws IOException {
-		try (final MappingsReader reader = this.createReader(path, from, to)) {
+		try (final var reader = this.createReader(path, from, to)) {
 			reader.read(mappings);
 		}
 		return mappings;

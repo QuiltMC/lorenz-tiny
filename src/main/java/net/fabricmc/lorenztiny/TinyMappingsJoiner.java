@@ -70,39 +70,39 @@ public class TinyMappingsJoiner extends MappingsReader {
 	@Override
 	public MappingSet read(final MappingSet mappings) {
 		// These maps have matched name -> definition from a
-		final Map<String, MappingTree.ClassMapping> classes = new HashMap<>();
-		final Map<String, MappingTree.FieldMapping> fields = new HashMap<>();
-		final Map<String, MappingTree.MethodMapping> methods = new HashMap<>();
+		final var classes = new HashMap<String, MappingTree.ClassMapping>();
+		final var fields = new HashMap<String, MappingTree.FieldMapping>();
+		final var methods = new HashMap<String, MappingTree.MethodMapping>();
 
-		for (final MappingTree.ClassMapping klass : this.treeB.getClasses()) {
+		for (final var klass : this.treeB.getClasses()) {
 			classes.put(klass.getName(this.matchA), klass);
 
-			for (final MappingTree.FieldMapping field : klass.getFields()) {
+			for (final var field : klass.getFields()) {
 				fields.put(field.getName(this.matchA), field);
 			}
 
-			for (final MappingTree.MethodMapping method : klass.getMethods()) {
+			for (final var method : klass.getMethods()) {
 				methods.put(method.getName(this.matchA), method);
 			}
 		}
 
-		for (final MappingTree.ClassMapping classA : this.treeA.getClasses()) {
-			final MappingTree.ClassMapping classB = classes.get(classA.getName(this.matchB));
+		for (final var classA : this.treeA.getClasses()) {
+			final var classB = classes.get(classA.getName(this.matchB));
 
-			final ClassMapping<?, ?> klass = mappings.getOrCreateClassMapping(classA.getName(this.from));
+			final var klass = mappings.getOrCreateClassMapping(classA.getName(this.from));
 			if (classB != null) {
-				String deobfName = classB.getName(this.to);
+				var deobfName = classB.getName(this.to);
 
 				if (deobfName != null) {
 					klass.setDeobfuscatedName(deobfName);
 				}
 			}
 
-			for (final MappingTree.FieldMapping fieldA : classA.getFields()) {
-				final MappingTree.FieldMapping fieldB = fields.get(fieldA.getName(this.matchB));
+			for (final var fieldA : classA.getFields()) {
+				final var fieldB = fields.get(fieldA.getName(this.matchB));
 
 				if (fieldB != null) {
-					String deobfName = fieldB.getName(this.to);
+					var deobfName = fieldB.getName(this.to);
 
 					if (deobfName != null) {
 						klass.getOrCreateFieldMapping(fieldA.getName(this.from), fieldA.getDesc(this.from))
@@ -111,8 +111,8 @@ public class TinyMappingsJoiner extends MappingsReader {
 				}
 			}
 
-			for (final MappingTree.MethodMapping methodA : classA.getMethods()) {
-				final MappingTree.MethodMapping methodB = methods.get(methodA.getName(this.matchB));
+			for (final var methodA : classA.getMethods()) {
+				final var methodB = methods.get(methodA.getName(this.matchB));
 
 				if (methodB != null) {
 					String deobfName = methodB.getName(this.to);
